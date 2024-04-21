@@ -12,7 +12,7 @@ from typing import Dict, Tuple
 
 load_dotenv()
 
-logging.basicConfig(level=logging.WARN, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 LOGGER = logging.getLogger(__name__)
 
 PASSWORD_CHARS = string.ascii_letters + string.digits + string.punctuation
@@ -94,7 +94,7 @@ def poll_for_users(scheduler):
              (time.time() - (
                      2 * (POLL_INTERVAL_IN_MS / 1000)))]  # Anyone joined in the last 2*POLL_INTERVAL_IN_MS seconds
     if len(users) == 0:
-        LOGGER.info("No new users found")
+        LOGGER.debug("No new users found")
         return
     else:
         LOGGER.info(f"Found {len(users)} new users")
