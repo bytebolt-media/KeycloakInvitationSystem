@@ -2,6 +2,7 @@ import os
 import time
 import sched
 import string
+import pickle
 import logging
 import keycloak
 import traceback
@@ -36,8 +37,20 @@ POLL_INTERVAL_IN_MS = int(POLL_INTERVAL_IN_MS) if POLL_INTERVAL_IN_MS is not Non
 REQUIRED_ACTIONS = os.environ.get("NEW_REQUIRED_ACTIONS").split(",") if os.environ.get(
     "NEW_REQUIRED_ACTIONS") is not None else []
 
-if keycloak_connection:
-    LOGGER.info("Connected to Keycloak")
+INVITED_USERS = []
+
+
+def read_users_pickle():
+    with open("./data/invited_users.pkl", "rb") as f:
+        users = pickle.load(f)
+        f.close()
+    return users
+
+
+def write_users_pickle():
+    with open("./data/invited_users.pkl", "wb") as f:
+        pickle.dump(INVITED_USERS, f)
+        f.close()
 
 
 def secure_password_gen(length: int = 16) -> str:
@@ -94,6 +107,7 @@ def poll_for_users(scheduler):
     users = KEYCLOAK_ADMIN.get_users({})
     users = [user for user in users if isinstance(user, dict)]
     users = [user for user in users if "invitation_sent" not in user["attributes"]]
+    users = [user for user in users if user["id"] not in INVITED_USERS]
     users = [user for user in users if (user["createdTimestamp"] / 1000) >=
              (time.time() - (
                      2 * (POLL_INTERVAL_IN_MS / 1000)))]  # Anyone joined in the last 2*POLL_INTERVAL_IN_MS seconds
@@ -113,18 +127,8 @@ def poll_for_users(scheduler):
         LOGGER.error(f"Failed to send email to {emails}")
     else:
         LOGGER.info(f"Email sent to {emails}")
-        for user in users:
-            # For some reason lastName and firstName are being wiped so we'll force an update here.
-            firstName = user["firstName"]
-            lastName = user["lastName"] if "lastName" in user.keys() else ""
-            response = KEYCLOAK_ADMIN.update_user(user['id'],
-                                                  {"attributes": {os.environ.get(
-                                                      "KEYCLOAK_INVITATION_SENT_ATTRIBUTE_ID"):
-                                                                      True},
-                                                   # "firstName": firstName,
-                                                   # "lastName": lastName
-                                                   })
-            # KEYCLOAK_ADMIN.send_update_account(user['id'], REQUIRED_ACTIONS)
+        INVITED_USERS.extend([user["id"] for user in users])
+        write_users_pickle()
 
 
 def main():
@@ -134,6 +138,16 @@ def main():
 
 
 if __name__ == "__main__":
+    if keycloak_connection:
+        LOGGER.info("Connected to Keycloak")
+
+    os.makedirs("./data", exist_ok=True)
+    if os.path.exists("./data/invited_users.pkl"):
+        INVITED_USERS = read_users_pickle()
+    else:
+        INVITED_USERS = []
+        write_users_pickle()
+
     try:
         main()
     except KeyboardInterrupt:
