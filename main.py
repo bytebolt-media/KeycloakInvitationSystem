@@ -1,14 +1,15 @@
 import os
-import keycloak
-import logging
 import time
 import sched
 import string
+import logging
+import keycloak
 import traceback
-from mailjet_rest import Client
-from keycloak import KeycloakAdmin
+
 from dotenv import load_dotenv
 from typing import Dict, Tuple
+from mailjet_rest import Client
+from keycloak import KeycloakAdmin
 
 load_dotenv()
 
