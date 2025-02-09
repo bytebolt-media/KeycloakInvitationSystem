@@ -36,6 +36,9 @@ POLL_INTERVAL_IN_MS = int(POLL_INTERVAL_IN_MS) if POLL_INTERVAL_IN_MS is not Non
 REQUIRED_ACTIONS = os.environ.get("NEW_REQUIRED_ACTIONS").split(",") if os.environ.get(
     "NEW_REQUIRED_ACTIONS") is not None else []
 
+if keycloak_connection:
+    LOGGER.info("Connected to Keycloak")
+
 
 def secure_password_gen(length: int = 16) -> str:
     # At least one uppercase, one lowercase, one digit and one punctuation
