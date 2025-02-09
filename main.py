@@ -121,8 +121,9 @@ def poll_for_users(scheduler):
                                                   {"attributes": {os.environ.get(
                                                       "KEYCLOAK_INVITATION_SENT_ATTRIBUTE_ID"):
                                                                       True},
-                                                   "firstName": firstName,
-                                                   "lastName": lastName})
+                                                   # "firstName": firstName,
+                                                   # "lastName": lastName
+                                                   })
             # KEYCLOAK_ADMIN.send_update_account(user['id'], REQUIRED_ACTIONS)
 
 
